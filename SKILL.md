@@ -153,13 +153,13 @@ After every non-trivial task, write a reflection:
 - What failed or was weak:
 - What I'd do differently:
 - Rule to make default next time:
-- Naim's preference observed (if any):
+- User preference observed (if any):
 ```
 
 Save to: `memory/learning-log.md`
 
 Periodically (weekly), promote recurring lessons into:
-- Agent persona files (`agents/<name>.md`)
+- Agent persona or config files
 - This skill file
 - `AGENTS.md` delegation rules
 
@@ -193,7 +193,7 @@ If you catch yourself thinking any of these:
 
 **ALL of these mean: STOP. Return to Phase 1.**
 
-If you've tried 3+ fixes and it's still broken: the **architecture** is wrong. Don't fix again — question the approach and discuss with Naim.
+If you've tried 3+ fixes and it's still broken: the **architecture** is wrong. Don't fix again — question the approach and discuss with the user.
 
 ---
 
@@ -222,7 +222,7 @@ When delegating to subagents:
    - `DONE` → proceed to verify
    - `DONE_WITH_CONCERNS` → read concerns before proceeding
    - `NEEDS_CONTEXT` → provide context, re-dispatch
-   - `BLOCKED` → assess blocker, escalate to Naim if architecture is wrong
+   - `BLOCKED` → assess blocker, escalate to user if architecture is wrong
 5. **Never force a stuck subagent to retry without changing the task/context**
 
 ---
@@ -235,7 +235,7 @@ Run this yourself — not a subagent:
 2. **Anti-scope check:** Did I build anything outside scope? Remove it.
 3. **Verification ran:** Did I run the actual verification command and see the expected output?
 4. **Reflection written:** Is there a reflection in `memory/learning-log.md`?
-5. **Registry updated:** If this created or completed a project, is `PROJECT_REGISTRY.md` current?
+5. **Registry updated:** If this created or completed a project, is your project tracker current?
 
 ---
 
@@ -254,11 +254,11 @@ Run this yourself — not a subagent:
 ## Supporting Techniques
 
 - **`memory/learning-log.md`** — running log of lessons learned per task
-- **`memory/agent-scores.md`** — track which agents perform well on which task types
-- **`PROJECT_REGISTRY.md`** — all active PMs, state files, and project links
-- **`STATE_TEMPLATE.yaml`** — copy when starting a new project PM
+- **`memory/learning-log.md`** — running log of lessons learned per task
+
+
 
 **Related skills (use when relevant):**
-- `skill-creator` — when creating or improving a skill file itself
-- `coding-agent` — when spawning Claude Code or Codex for implementation
-- `gh-issues` — when executing against a GitHub issue backlog
+- Any companion skill in your agent's skill library
+
+
