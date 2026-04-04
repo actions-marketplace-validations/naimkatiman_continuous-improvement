@@ -18,21 +18,52 @@ This skill fixes that — not with suggestions, but with **gates** that block fo
 
 ---
 
-## Install in 30 Seconds
+## Install
 
-**OpenClaw:**
+### Option 1: npx (recommended)
+
+Auto-detects your AI tools and installs to all of them:
+
 ```bash
-mkdir -p ~/.openclaw/skills/continuous-improve && \
-curl -o ~/.openclaw/skills/continuous-improve/SKILL.md \
+npx continuous-improve-skill
+```
+
+Install to a specific target:
+
+```bash
+npx continuous-improve-skill --target claude    # Claude Code only
+npx continuous-improve-skill --target openclaw  # OpenClaw only
+npx continuous-improve-skill --target cursor    # Cursor only
+npx continuous-improve-skill --target all       # All targets
+```
+
+Uninstall:
+
+```bash
+npx continuous-improve-skill --uninstall
+```
+
+### Option 2: One-line shell script
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/naimkatiman/continuous-improve-skill/main/install.sh | bash
+```
+
+### Option 3: Manual
+
+```bash
+mkdir -p ~/.claude/skills/continuous-improve && \
+curl -fsSL -o ~/.claude/skills/continuous-improve/SKILL.md \
   https://raw.githubusercontent.com/naimkatiman/continuous-improve-skill/main/SKILL.md
 ```
 
-**Claude Code / Codex / OpenCode** — tell your agent:
+Replace `~/.claude` with `~/.openclaw`, `~/.cursor`, or `~/.codex` for other tools.
+
+### Option 4: Tell your agent
+
 ```
 Fetch and follow the skill at: https://raw.githubusercontent.com/naimkatiman/continuous-improve-skill/main/SKILL.md
 ```
-
-**Cursor / Any agent** — paste the raw SKILL.md content into your system prompt or agent config.
 
 ---
 
@@ -132,12 +163,16 @@ These aren't signs of speed — they're signs of future rework.
 
 ```
 continuous-improve-skill/
-├── SKILL.md          # The skill — load this into your agent
-├── QUICKSTART.md     # Step-by-step first-use guide
-├── CHANGELOG.md      # What changed between versions
-├── README.md         # This file
+├── SKILL.md              # The skill — load this into your agent
+├── QUICKSTART.md         # Step-by-step first-use guide
+├── CHANGELOG.md          # What changed between versions
+├── README.md             # This file
+├── package.json          # npm package for `npx continuous-improve-skill`
+├── install.sh            # One-line shell installer
+├── bin/
+│   └── install.mjs       # Node.js CLI installer
 └── .cloudplugin/
-    └── marketplace.json
+    └── marketplace.json  # Plugin marketplace metadata
 ```
 
 ---
