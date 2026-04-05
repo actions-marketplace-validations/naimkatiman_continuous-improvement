@@ -1,6 +1,6 @@
 {
   "name": "continuous-improve-skill",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A structured 7-Law self-improvement loop with instinct-based learning for AI agents — research, plan, execute, verify, reflect, learn, iterate",
   "keywords": [
     "ai-agent",
@@ -36,6 +36,7 @@
     "bin/",
     "hooks/",
     "agents/",
+    "commands/",
     ".cloudplugin/"
   ],
   "type": "module"

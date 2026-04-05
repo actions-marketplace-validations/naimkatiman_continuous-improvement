@@ -129,7 +129,41 @@ function setupMulahazah() {
     console.log(`  ✓ config.json → ${configDest}`);
   }
 
-  // 5. Patch ~/.claude/settings.json with PreToolUse/PostToolUse hooks
+  // 5. Copy analyze.sh
+  const binDir = join(mulahazahDir, "bin");
+  mkdirSync(binDir, { recursive: true });
+  const analyzeSrc = join(REPO_ROOT, "bin", "analyze.sh");
+  const analyzeDest = join(binDir, "analyze.sh");
+  if (existsSync(analyzeSrc)) {
+    copyFileSync(analyzeSrc, analyzeDest);
+    chmodSync(analyzeDest, 0o755);
+    console.log(`  ✓ analyze.sh → ${analyzeDest}`);
+  }
+
+  // 6. Copy /continuous-improve command
+  const commandsDir = join(home, ".claude", "commands");
+  mkdirSync(commandsDir, { recursive: true });
+  const cmdSrc = join(REPO_ROOT, "commands", "continuous-improve.md");
+  const cmdDest = join(commandsDir, "continuous-improve.md");
+  if (existsSync(cmdSrc)) {
+    copyFileSync(cmdSrc, cmdDest);
+    console.log(`  ✓ /continuous-improve command → ${cmdDest}`);
+  }
+
+  // 7. Initialize rules.md if it doesn't exist
+  const rulesFile = join(mulahazahDir, "rules.md");
+  if (!existsSync(rulesFile)) {
+    writeFileSync(rulesFile, "# Learned Rules\n\nRules extracted from session observations by Mulahazah.\nRemove any rule that causes problems. Keep what helps.\n\n---\n\n");
+    console.log(`  ✓ rules.md initialized → ${rulesFile}`);
+  }
+
+  // 8. Initialize projects.json if it doesn't exist
+  const registryFile = join(mulahazahDir, "projects.json");
+  if (!existsSync(registryFile)) {
+    writeFileSync(registryFile, "{}\n");
+  }
+
+  // 9. Patch ~/.claude/settings.json with PreToolUse/PostToolUse hooks
   patchClaudeSettings(observeDest);
 }
 

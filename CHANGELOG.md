@@ -4,28 +4,35 @@ All notable changes to this skill are documented here.
 
 ---
 
+## [2.0.1] — 2026-04-05
+
+### Fixed
+- SKILL.md rewritten to be honest — removed claims about features that didn't work (YAML instinct auto-loading, graduated confidence enforcement)
+- Law 7 now uses `~/.claude/mulahazah/rules.md` — a markdown file Claude can actually read/write reliably
+- Added `bin/analyze.sh` — the actual analysis pipeline that was missing (calls Haiku to extract rules from observations)
+- Added `commands/continuous-improve.md` — the actual `/continuous-improve` command file
+- Installer now copies analyze.sh, command file, and initializes rules.md
+- observer-loop.sh rewritten to use analyze.sh instead of broken YAML instinct pipeline
+- README rewritten to match what the tool actually does
+
+---
+
 ## [2.0.0] — 2026-04-05
 
 ### Added
-- Law 7: Learn From Every Session — instinct-based behavioral learning (Mulahazah)
-- PreToolUse/PostToolUse hooks for 100% session observation
-- Background Haiku observer agent for automatic pattern detection
-- Atomic instincts with confidence scoring (0.3-0.9) and natural decay
-- Project-scoped learning — prevents cross-project contamination
-- Graduated instinct behavior: silent / suggest / auto-apply
-- `/continuous-improve` master command (status, analyze, reflect, projects)
+- Law 7: Learn From Every Session — Mulahazah learning system
+- PreToolUse/PostToolUse hooks for session observation
+- Background Haiku observer agent for pattern detection
+- Project-scoped observation (per-project JSONL files)
+- `/continuous-improve` command
 - `hooks/observe.sh` — lightweight observation hook (<50ms)
-- `agents/observer.md` — background observer agent prompt
-- `agents/observer-loop.sh` — periodic analysis runner
-- `agents/start-observer.sh` — observer launcher with PID management
+- `agents/` — observer agent scripts
 - `config.json` — observer configuration
 
 ### Changed
 - Upgraded from 5-phase framework to 7-Law system
-- Law 5 (Reflect) now feeds instinct system — "Rule to add" becomes instinct with 0.6 confidence
 - The Loop: Research → Plan → Execute → Verify → Reflect → Learn → Iterate
-- Installer now sets up Mulahazah hooks and directory structure for Claude Code
-- SKILL.md completely rewritten with instinct behavior and /continuous-improve command
+- Installer sets up Mulahazah hooks and directories for Claude Code
 
 ### Improved
 - Law 6 (Iterate) now explicit — one change → verify → next change

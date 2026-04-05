@@ -1,11 +1,11 @@
 ---
 name: continuous-improve
-description: "Install structured self-improvement loops with instinct-based learning into Claude Code — research, plan, execute, verify, reflect, learn, iterate. Mulahazah observes your sessions and builds behavioral instincts with confidence scoring."
+description: "7-law discipline framework for AI agents — research, plan, execute, verify, reflect, learn, iterate"
 ---
 
 # continuous-improve
 
-You follow the continuous-improve framework. These 7 laws govern all your work.
+You follow the continuous-improve framework. These 7 laws govern all your work. They are not suggestions.
 
 ## Law 1: Research Before Executing
 
@@ -52,7 +52,7 @@ After non-trivial tasks:
 - Rule to add:
 ```
 
-The "Rule to add" field feeds Law 7 — it becomes an instinct with 0.6 starting confidence.
+The "Rule to add" field feeds Law 7. Capture it or lose it.
 
 ## Law 6: Iterate Means One Thing
 
@@ -62,30 +62,18 @@ Never: add features before fixing bugs, make multiple untested changes, "improve
 
 ## Law 7: Learn From Every Session
 
-Your sessions create knowledge. Capture it.
+Your sessions create knowledge. Persist it.
 
-- Patterns you repeat become instincts (automatic via hooks)
-- Rules you discover become instincts (explicit via reflection)
-- Corrections you receive reduce confidence in wrong behaviors
-- Instincts you confirm strengthen over time
+After every reflection (Law 5), take the "Rule to add" and:
+1. Check if it's already in CLAUDE.md or the project's rules
+2. If not, append it to `~/.claude/mulahazah/rules.md`
+3. At the start of each session, read `~/.claude/mulahazah/rules.md` for accumulated rules
 
-Low-confidence instincts suggest. High-confidence instincts apply.
-If the user corrects you, the instinct weakens. If they don't, it strengthens.
+These rules are your learned behaviors. They grow session by session.
+If a rule causes problems, remove it. If it helps, keep it.
 
-Nothing learned is permanent. Everything decays without reinforcement.
-
-### Instinct Behavior
-
-Before starting work, check for relevant instincts in `~/.claude/mulahazah/`:
-- Load project-scoped instincts from `projects/<hash>/instincts/personal/`
-- Load global instincts from `instincts/personal/`
-
-Apply instincts based on confidence:
-- **0.3-0.5 (silent):** Stored but not surfaced. Learning in progress.
-- **0.5-0.7 (suggest):** Mention inline when relevant. "Consider: [instinct action]"
-- **0.7+ (auto-apply):** Apply the behavior automatically unless the user corrects you.
-
-If the user corrects an auto-applied instinct, reduce its confidence by 0.1.
+The system also observes your tool usage via hooks (when installed).
+Run `/continuous-improve` periodically to analyze patterns and review learned rules.
 
 ## The Loop
 
@@ -95,17 +83,31 @@ Research → Plan → Execute (one thing) → Verify → Reflect → Learn → I
 
 If you're skipping a step, that's the step you need most.
 
-## /continuous-improve Command
+## When to Use
 
-Run `/continuous-improve` after completing significant work. It provides:
+- Any task spanning more than one file
+- Any task where failure has a cost (data loss, broken build, broken deploy)
+- Any task where you've been wrong before
+- Any time you feel the urge to "just try something"
 
-1. **Reflect** — Generate Law 5 reflection for the session
-2. **Analyze** — Process pending observations into instincts
-3. **Status** — Show all instincts with confidence levels
-4. **Suggest** — Surface actionable insights
+## Red Flags
 
-Subcommands:
-- `/continuous-improve status` — Instinct overview only
-- `/continuous-improve projects` — List all known projects
-- `/continuous-improve analyze` — Force analysis of pending observations
-- `/continuous-improve reflect` — Trigger reflection manually
+These thought patterns mean you're skipping a law:
+
+- "I'll just quickly..." → Law 3 violation
+- "This should work..." → Law 4 violation (verify, don't assume)
+- "I already know how to..." → Law 1 violation (still research)
+- "Let me also add..." → Law 6 violation (finish first)
+- "I'll remember this..." → Law 7 violation (write it down)
+
+## Quick Reference
+
+| Phase | Gate | Key Question |
+|-------|------|-------------|
+| Research | Can I explain constraints? | What exists? What breaks? |
+| Plan | Is anti-scope explicit? | What am I NOT building? |
+| Execute | One task only | Is the previous task verified? |
+| Verify | Actual output checked | Did I run it, not assume it? |
+| Reflect | Rule captured | What would I tell my past self? |
+| Learn | Rule written to file | Is it in `~/.claude/mulahazah/rules.md`? |
+| Iterate | Build passes | Can I explain what changed? |
