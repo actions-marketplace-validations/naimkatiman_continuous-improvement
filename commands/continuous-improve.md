@@ -1,6 +1,6 @@
 ---
 name: continuous-improve
-description: "Reflect on the current session, analyze observations for patterns, and review learned rules. Run after finishing significant work."
+description: "Reflect on the current session, analyze observations for patterns, and show instinct status. Run after finishing significant work."
 ---
 
 # /continuous-improve
@@ -19,51 +19,56 @@ Generate a reflection for this session based on what happened:
 - Rule to add:
 ```
 
-If there's a "Rule to add", check `~/.claude/mulahazah/rules.md` to see if it already exists. If not, append it.
+If there's a "Rule to add", create an instinct YAML file with 0.6 starting confidence in the project's instinct directory.
 
 ## Step 2: Analyze Observations
 
-Check if `~/.claude/mulahazah/observations.jsonl` or `~/.claude/mulahazah/projects/*/observations.jsonl` has data.
+Check `~/.claude/instincts/` for the current project (detect via git root → SHA-256 first 12 chars).
 
-If observations exist (5+ lines), run the analysis:
-```bash
-bash ~/.claude/mulahazah/bin/analyze.sh
-```
+Look at `~/.claude/instincts/<hash>/observations.jsonl`. If 20+ lines exist:
 
-Report what the analysis found (new rules or "no new patterns yet").
+1. Read the last 500 lines
+2. Read existing instinct `*.yaml` files (project + global)
+3. Detect patterns:
+   - User corrections → "don't do X" instincts
+   - Error→fix sequences → "when X fails, try Y"
+   - Repeated workflows (3+ times) → "for X, do A→B→C"
+   - Tool preferences → "use tool Y for task X"
+4. Create/update instinct YAML files
+5. Be conservative: only create instincts for 3+ observations of the same pattern
 
-If no observations exist, say so — hooks may not be installed.
+If fewer than 20 observations, skip analysis and note the count.
 
 ## Step 3: Show Status
 
-Read `~/.claude/mulahazah/rules.md` and display all learned rules.
-
-Show:
-- Total rule count
-- Rules grouped by date they were added
-- Any rules that should be reviewed (contradictory, outdated, too vague)
-
-If no rules file exists yet, explain this is expected for new installs — rules accumulate over sessions.
-
-## Output Format
+Display all instincts for the current project + global:
 
 ```
 === continuous-improve ===
 
+## Level: [CAPTURE | ANALYZE | SUGGEST | AUTO-APPLY]
+
 ## Session Reflection
 - What worked: [from this session]
-- What failed: [from this session]  
+- What failed: [from this session]
 - What I'd do differently: [from this session]
-- Rule to add: [captured and saved]
+- Rule to add: [captured as instinct]
 
-## Observation Analysis
-[N] observations analyzed
-[N] new rules extracted (or "no new patterns yet")
+## Learning
+  NEW  [instinct-id]        [domain]  [confidence]  (from reflection)
+   ↑   [instinct-id]        [domain]  [old]→[new]   (+N observations)
 
-## Learned Rules ([N] total)
-[list all rules from rules.md]
+## Instincts — [project-name] ([hash])
+  ● [0.85] instinct-id       domain   auto-apply
+  ◐ [0.60] instinct-id       domain   suggest
+  ○ [0.35] instinct-id       domain   silent
 
-## Next Steps
+## Instincts — global
+  ● [0.90] instinct-id       domain   auto-apply
+
+## Next
 - Keep working — hooks capture automatically
-- Run /continuous-improve again after your next major task
+- System auto-levels as instincts gain confidence
 ```
+
+If no instincts or observations exist yet, explain this is expected — the system is in CAPTURE level and will create instincts after 20+ observations accumulate.

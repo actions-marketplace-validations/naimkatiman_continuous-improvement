@@ -1,6 +1,6 @@
 ---
 name: continuous-improve
-description: "7-law discipline framework for AI agents — research, plan, execute, verify, reflect, learn, iterate"
+description: "7-law discipline framework with auto-leveling instinct learning for AI agents — research, plan, execute, verify, reflect, learn, iterate"
 ---
 
 # continuous-improve
@@ -52,7 +52,7 @@ After non-trivial tasks:
 - Rule to add:
 ```
 
-The "Rule to add" field feeds Law 7. Capture it or lose it.
+The "Rule to add" field feeds Law 7 — it becomes an instinct with 0.6 starting confidence.
 
 ## Law 6: Iterate Means One Thing
 
@@ -62,18 +62,17 @@ Never: add features before fixing bugs, make multiple untested changes, "improve
 
 ## Law 7: Learn From Every Session
 
-Your sessions create knowledge. Persist it.
+Your sessions create knowledge. Capture it.
 
-After every reflection (Law 5), take the "Rule to add" and:
-1. Check if it's already in CLAUDE.md or the project's rules
-2. If not, append it to `~/.claude/mulahazah/rules.md`
-3. At the start of each session, read `~/.claude/mulahazah/rules.md` for accumulated rules
+- Patterns you repeat become instincts (automatic via hooks)
+- Rules you discover become instincts (explicit via reflection)
+- Corrections you receive reduce confidence in wrong behaviors
+- Instincts you confirm strengthen over time
 
-These rules are your learned behaviors. They grow session by session.
-If a rule causes problems, remove it. If it helps, keep it.
+Low-confidence instincts suggest. High-confidence instincts apply.
+If the user corrects you, the instinct weakens. If they don't, it strengthens.
 
-The system also observes your tool usage via hooks (when installed).
-Run `/continuous-improve` periodically to analyze patterns and review learned rules.
+Nothing learned is permanent. Everything decays without reinforcement.
 
 ## The Loop
 
@@ -82,6 +81,82 @@ Research → Plan → Execute (one thing) → Verify → Reflect → Learn → I
 ```
 
 If you're skipping a step, that's the step you need most.
+
+---
+
+## Instinct System (Mulahazah)
+
+At the start of every session, check `~/.claude/instincts/` for this project's instincts.
+
+### Auto-Level Detection
+
+Determine current level automatically:
+
+1. **Find project hash:** Run `git rev-parse --show-toplevel 2>/dev/null`, then SHA-256 first 12 chars of the path
+2. **Check observations:** Count lines in `~/.claude/instincts/<hash>/observations.jsonl`
+3. **Check instincts:** List `*.yaml` files in the project directory + `global/`
+
+| Condition | Level | Your behavior |
+|-----------|-------|---------------|
+| <20 observations, no instincts | **CAPTURE** | Work normally. Hooks are capturing silently. |
+| 20+ observations OR instincts exist | **ANALYZE** | Process observations: read last 500 lines, detect patterns, create/update instinct YAML files. Then load instincts. |
+| Any instinct at 0.5–0.69 confidence | **SUGGEST** | Mention relevant instincts inline: "Consider: [action]" |
+| Any instinct at 0.7+ confidence | **AUTO-APPLY** | Apply the behavior automatically. |
+
+Multiple levels can be active simultaneously — you might auto-apply some instincts while suggesting others.
+
+### Inline Analysis
+
+When 20+ unprocessed observations exist, analyze them as part of session startup:
+
+1. Read `observations.jsonl` (last 500 lines)
+2. Read existing instincts (project + global `*.yaml` files)
+3. Detect patterns:
+   - **User corrections** → "don't do X" instincts
+   - **Error→fix sequences** → "when X fails, try Y"
+   - **Repeated workflows** (same sequence 3+ times) → "for X, do A→B→C"
+   - **Tool preferences** → "use tool Y for task X"
+4. Create/update instinct YAML files in the project directory
+5. Be conservative: only create instincts for 3+ observations of the same pattern
+
+### Instinct Format
+
+Each instinct is a YAML file in `~/.claude/instincts/<hash>/` or `~/.claude/instincts/global/`:
+
+```yaml
+id: prefer-grep-before-edit
+trigger: "when modifying code"
+confidence: 0.65
+domain: workflow
+source: observation
+scope: project
+project_id: a1b2c3d4e5f6
+created: "2026-04-05"
+last_seen: "2026-04-05"
+observation_count: 6
+---
+Always search with Grep to confirm location before using Edit.
+```
+
+### Confidence Behavior
+
+| Range | Behavior |
+|-------|----------|
+| 0.0–0.49 | **Silent** — stored, not surfaced |
+| 0.5–0.69 | **Suggest** — mention inline when relevant |
+| 0.7–0.9 | **Auto-apply** — apply automatically |
+
+### Confidence Changes
+
+| Event | Change |
+|-------|--------|
+| User explicitly accepts suggestion | +0.15 |
+| Confirming observation (same pattern seen again) | +0.05 |
+| Reflection matches existing instinct | +0.2 |
+| User corrects/rejects | -0.1 |
+| No observation for 30 days | -0.05 decay |
+
+Cap: 0.9 max. Scope: default to project; promote to global when seen in 2+ projects.
 
 ## When to Use
 
@@ -99,15 +174,3 @@ These thought patterns mean you're skipping a law:
 - "I already know how to..." → Law 1 violation (still research)
 - "Let me also add..." → Law 6 violation (finish first)
 - "I'll remember this..." → Law 7 violation (write it down)
-
-## Quick Reference
-
-| Phase | Gate | Key Question |
-|-------|------|-------------|
-| Research | Can I explain constraints? | What exists? What breaks? |
-| Plan | Is anti-scope explicit? | What am I NOT building? |
-| Execute | One task only | Is the previous task verified? |
-| Verify | Actual output checked | Did I run it, not assume it? |
-| Reflect | Rule captured | What would I tell my past self? |
-| Learn | Rule written to file | Is it in `~/.claude/mulahazah/rules.md`? |
-| Iterate | Build passes | Can I explain what changed? |

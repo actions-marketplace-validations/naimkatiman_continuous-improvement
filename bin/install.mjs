@@ -18,7 +18,6 @@ import {
   copyFileSync,
   readFileSync,
   writeFileSync,
-  unlinkSync,
   rmSync,
   chmodSync,
 } from "node:fs";
@@ -75,7 +74,6 @@ function installTo(key) {
     copyFileSync(SKILL_SOURCE, join(target.dir, "SKILL.md"));
     console.log(`  ✓ ${target.label} → ${target.dir}/SKILL.md`);
 
-    // Mulahazah setup is only for Claude Code
     if (key === "claude") {
       setupMulahazah();
     }
@@ -89,58 +87,23 @@ function installTo(key) {
 
 function setupMulahazah() {
   const home = homedir();
-  const mulahazahDir = join(home, ".claude", "mulahazah");
-  const instinctsDir = join(mulahazahDir, "instincts", "personal");
-  const projectsDir = join(mulahazahDir, "projects");
-  const agentsDir = join(mulahazahDir, "agents");
+  const instinctsDir = join(home, ".claude", "instincts");
+  const globalDir = join(instinctsDir, "global");
 
   // 1. Create directory structure
-  mkdirSync(instinctsDir, { recursive: true });
-  mkdirSync(projectsDir, { recursive: true });
-  mkdirSync(agentsDir, { recursive: true });
-  console.log(`  ✓ Mulahazah dirs → ${mulahazahDir}/`);
+  mkdirSync(globalDir, { recursive: true });
+  console.log(`  ✓ Instincts dir → ${instinctsDir}/`);
 
   // 2. Copy observe.sh and make executable
   const observeSrc = join(REPO_ROOT, "hooks", "observe.sh");
-  const observeDest = join(mulahazahDir, "observe.sh");
+  const observeDest = join(instinctsDir, "observe.sh");
   if (existsSync(observeSrc)) {
     copyFileSync(observeSrc, observeDest);
     chmodSync(observeDest, 0o755);
     console.log(`  ✓ observe.sh → ${observeDest}`);
   }
 
-  // 3. Copy observer agent files
-  const agentFiles = ["observer.md", "observer-loop.sh", "start-observer.sh"];
-  for (const file of agentFiles) {
-    const src = join(REPO_ROOT, "agents", file);
-    const dest = join(agentsDir, file);
-    if (existsSync(src)) {
-      copyFileSync(src, dest);
-      if (file.endsWith(".sh")) chmodSync(dest, 0o755);
-      console.log(`  ✓ ${file} → ${dest}`);
-    }
-  }
-
-  // 4. Copy config.json
-  const configSrc = join(REPO_ROOT, "config.json");
-  const configDest = join(mulahazahDir, "config.json");
-  if (existsSync(configSrc)) {
-    copyFileSync(configSrc, configDest);
-    console.log(`  ✓ config.json → ${configDest}`);
-  }
-
-  // 5. Copy analyze.sh
-  const binDir = join(mulahazahDir, "bin");
-  mkdirSync(binDir, { recursive: true });
-  const analyzeSrc = join(REPO_ROOT, "bin", "analyze.sh");
-  const analyzeDest = join(binDir, "analyze.sh");
-  if (existsSync(analyzeSrc)) {
-    copyFileSync(analyzeSrc, analyzeDest);
-    chmodSync(analyzeDest, 0o755);
-    console.log(`  ✓ analyze.sh → ${analyzeDest}`);
-  }
-
-  // 6. Copy /continuous-improve command
+  // 3. Copy /continuous-improve command
   const commandsDir = join(home, ".claude", "commands");
   mkdirSync(commandsDir, { recursive: true });
   const cmdSrc = join(REPO_ROOT, "commands", "continuous-improve.md");
@@ -150,20 +113,7 @@ function setupMulahazah() {
     console.log(`  ✓ /continuous-improve command → ${cmdDest}`);
   }
 
-  // 7. Initialize rules.md if it doesn't exist
-  const rulesFile = join(mulahazahDir, "rules.md");
-  if (!existsSync(rulesFile)) {
-    writeFileSync(rulesFile, "# Learned Rules\n\nRules extracted from session observations by Mulahazah.\nRemove any rule that causes problems. Keep what helps.\n\n---\n\n");
-    console.log(`  ✓ rules.md initialized → ${rulesFile}`);
-  }
-
-  // 8. Initialize projects.json if it doesn't exist
-  const registryFile = join(mulahazahDir, "projects.json");
-  if (!existsSync(registryFile)) {
-    writeFileSync(registryFile, "{}\n");
-  }
-
-  // 9. Patch ~/.claude/settings.json with PreToolUse/PostToolUse hooks
+  // 4. Patch ~/.claude/settings.json with hooks
   patchClaudeSettings(observeDest);
 }
 
@@ -218,7 +168,7 @@ function patchClaudeSettings(observePath) {
 }
 
 function uninstallAll() {
-  console.log("\n🗑  Uninstalling continuous-improve skill...\n");
+  console.log("\nUninstalling continuous-improve skill...\n");
   let removed = 0;
   for (const [key, target] of Object.entries(TARGETS)) {
     const skillFile = join(target.dir, "SKILL.md");
@@ -249,11 +199,8 @@ Options:
 
 Examples:
   npx continuous-improve-skill              # auto-detect & install
-  npx continuous-improve-skill --target all # install everywhere
-  npx continuous-improve-skill --uninstall  # remove all
-
-Note: Mulahazah instinct-learning setup (hooks, observer, settings patch)
-      only applies to the Claude Code target.
+  npx continuous-improve-skill --target all  # install everywhere
+  npx continuous-improve-skill --uninstall   # remove all
 `);
 }
 
@@ -272,11 +219,8 @@ if (args.includes("--uninstall")) {
 }
 
 console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║          continuous-improve-skill v2.0 installer             ║
-║   Research → Plan → Execute → Verify → Reflect → Learn →    ║
-║   Iterate  —  7 Laws + Mulahazah instinct learning           ║
-╚══════════════════════════════════════════════════════════════╝
+continuous-improve-skill v2.1
+Research → Plan → Execute → Verify → Reflect → Learn → Iterate
 `);
 
 const targetIdx = args.indexOf("--target");
@@ -313,13 +257,10 @@ for (const t of targets) {
 const hasClaude = targets.includes("claude");
 
 console.log(`
-${installed > 0 ? "✅" : "❌"} Installed to ${installed}/${targets.length} target(s).
-${hasClaude ? "\n✅ Mulahazah instinct-learning system set up for Claude Code." : ""}
+${installed > 0 ? "Done." : "Failed."} Installed to ${installed}/${targets.length} target(s).
+${hasClaude ? "\nHooks are capturing. System auto-levels as you use it." : ""}
 Next steps:
-  1. Start a new Claude Code session (restart to pick up hook changes)
+  1. Start a new Claude Code session
   2. Say: "Use the continuous-improve framework to [your task]"
-  3. Watch the 7-Law loop in action
-  4. After your first task, run: /continuous-improve
-${hasClaude ? "\nOptional — start background observer (Haiku, cost-efficient):\n  bash ~/.claude/mulahazah/agents/start-observer.sh" : ""}
-Docs: https://github.com/naimkatiman/continuous-improve-skill
+  3. After your first task, run: /continuous-improve
 `);

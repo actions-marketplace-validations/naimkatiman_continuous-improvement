@@ -4,6 +4,24 @@ All notable changes to this skill are documented here.
 
 ---
 
+## [2.1.0] — 2026-04-05
+
+### Changed
+- **Auto-leveling** — system promotes itself from CAPTURE → ANALYZE → SUGGEST → AUTO-APPLY based on observation count and instinct confidence. No user action needed.
+- **No background daemon** — analysis runs inline at session start. Removed start-observer.sh, observer-loop.sh, PID management.
+- **Simplified directory** — `~/.claude/instincts/` replaces `~/.claude/mulahazah/` with flat structure
+- **jq optional** — observe.sh works with pure bash fallback if jq isn't installed
+- **Leaner installer** — no daemon files copied, no config.json, no analyze.sh. Just skill + hook + command.
+- **Smaller package** — removed agents/ and config.json from published files
+
+### Removed
+- Background observer daemon (deferred to v2.2 as opt-in)
+- `~/.claude/mulahazah/` directory structure (replaced by `~/.claude/instincts/`)
+- `rules.md` (replaced by YAML instinct files with confidence scoring)
+- `bin/analyze.sh` (analysis now inline via SKILL.md prompt)
+
+---
+
 ## [2.0.1] — 2026-04-05
 
 ### Fixed

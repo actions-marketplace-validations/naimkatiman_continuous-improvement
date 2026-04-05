@@ -6,12 +6,7 @@
 # Always exit 0 — never block the Claude session
 trap 'exit 0' EXIT ERR INT TERM
 
-# Require jq — if unavailable, silently exit
-command -v jq &>/dev/null || exit 0
-
-MULAHAZAH_DIR="${HOME}/.claude/mulahazah"
-PROJECTS_DIR="${MULAHAZAH_DIR}/projects"
-GLOBAL_REGISTRY="${MULAHAZAH_DIR}/projects.json"
+INSTINCTS_DIR="${HOME}/.claude/instincts"
 
 # ---------------------------------------------------------------------------
 # Read stdin (hook payload) — single read for performance
@@ -20,17 +15,29 @@ INPUT="$(cat)"
 [[ -z "$INPUT" ]] && exit 0
 
 # ---------------------------------------------------------------------------
-# Parse hook payload in one jq call
+# Parse hook payload — use jq if available, otherwise basic extraction
 # ---------------------------------------------------------------------------
-read -r TOOL_NAME SESSION_ID HAS_OUTPUT INPUT_JSON OUTPUT_JSON <<< "$(
-  printf '%s' "$INPUT" | jq -r '
-    (.tool_name // ""),
-    (.session_id // ""),
-    (if has("tool_output") then "yes" else "no" end),
-    ((.tool_input // {} | tostring) | .[0:500]),
-    ((.tool_output // {} | tostring) | .[0:200])
-  ' | paste - - - - -
-)"
+if command -v jq &>/dev/null; then
+  read -r TOOL_NAME SESSION_ID HAS_OUTPUT INPUT_JSON OUTPUT_JSON <<< "$(
+    printf '%s' "$INPUT" | jq -r '
+      (.tool_name // ""),
+      (.session_id // ""),
+      (if has("tool_output") then "yes" else "no" end),
+      ((.tool_input // {} | tostring) | .[0:500]),
+      ((.tool_output // {} | tostring) | .[0:200])
+    ' | paste - - - - -
+  )"
+else
+  # Fallback: extract tool_name with basic pattern matching
+  TOOL_NAME="$(printf '%s' "$INPUT" | sed -n 's/.*"tool_name" *: *"\([^"]*\)".*/\1/p' | head -1)"
+  SESSION_ID="$(printf '%s' "$INPUT" | sed -n 's/.*"session_id" *: *"\([^"]*\)".*/\1/p' | head -1)"
+  HAS_OUTPUT="no"
+  printf '%s' "$INPUT" | grep -q '"tool_output"' && HAS_OUTPUT="yes"
+  INPUT_JSON="$(printf '%s' "$INPUT" | head -c 500)"
+  OUTPUT_JSON=""
+fi
+
+[[ -z "$TOOL_NAME" ]] && exit 0
 
 # Determine event type
 if [[ "$HAS_OUTPUT" == "yes" ]]; then
@@ -40,27 +47,24 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Project detection (4 priority levels)
+# Project detection
 # ---------------------------------------------------------------------------
 PROJECT_ROOT=""
 
-# Priority 1: $CLAUDE_PROJECT_DIR env var
 if [[ -n "${CLAUDE_PROJECT_DIR:-}" && -d "${CLAUDE_PROJECT_DIR}" ]]; then
   PROJECT_ROOT="${CLAUDE_PROJECT_DIR}"
 fi
 
-# Priority 2+3: git repo root (covers both remote-url and root-hash priorities)
 if [[ -z "$PROJECT_ROOT" ]]; then
   PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 fi
 
-# Priority 4: global fallback
 if [[ -z "$PROJECT_ROOT" ]]; then
   PROJECT_ROOT="global"
 fi
 
 # ---------------------------------------------------------------------------
-# Compute project hash and name (SHA-256 first 12 chars)
+# Compute project hash and name
 # ---------------------------------------------------------------------------
 PROJECT_HASH="$(printf '%s' "$PROJECT_ROOT" | sha256sum | cut -c1-12)"
 PROJECT_NAME="$(basename "${PROJECT_ROOT%.git}")"
@@ -68,20 +72,18 @@ PROJECT_NAME="$(basename "${PROJECT_ROOT%.git}")"
 # ---------------------------------------------------------------------------
 # Directory setup
 # ---------------------------------------------------------------------------
-PROJECT_OBS_DIR="${PROJECTS_DIR}/${PROJECT_HASH}"
-OBS_FILE="${PROJECT_OBS_DIR}/observations.jsonl"
+PROJECT_DIR="${INSTINCTS_DIR}/${PROJECT_HASH}"
+OBS_FILE="${PROJECT_DIR}/observations.jsonl"
 
-# Create dirs only if needed (fast no-op if already exists)
-[[ -d "$PROJECT_OBS_DIR" ]] || mkdir -p "${PROJECT_OBS_DIR}/observations.archive"
+[[ -d "$PROJECT_DIR" ]] || mkdir -p "$PROJECT_DIR"
 
 # ---------------------------------------------------------------------------
-# Rotate observations.jsonl if it exceeds 10,000 lines
+# Rotate observations.jsonl at 10,000 lines
 # ---------------------------------------------------------------------------
 if [[ -f "$OBS_FILE" ]]; then
   LINE_COUNT="$(wc -l < "$OBS_FILE")"
   if (( LINE_COUNT >= 10000 )); then
-    ARCHIVE_DATE="$(date -u +"%Y-%m-%d")"
-    mv "$OBS_FILE" "${PROJECT_OBS_DIR}/observations.archive/${ARCHIVE_DATE}.jsonl"
+    mv "$OBS_FILE" "${PROJECT_DIR}/observations.$(date -u +"%Y-%m-%d").jsonl"
   fi
 fi
 
@@ -90,44 +92,43 @@ fi
 # ---------------------------------------------------------------------------
 TS="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-printf '%s\n' "$(jq -cn \
-  --arg ts "$TS" \
-  --arg event "$EVENT" \
-  --arg session "$SESSION_ID" \
-  --arg tool "$TOOL_NAME" \
-  --arg input_summary "$INPUT_JSON" \
-  --arg output_summary "$OUTPUT_JSON" \
-  --arg project_id "$PROJECT_HASH" \
-  --arg project_name "$PROJECT_NAME" \
-  '{ts:$ts,event:$event,session:$session,tool:$tool,input_summary:$input_summary,output_summary:$output_summary,project_id:$project_id,project_name:$project_name}')" \
-  >> "$OBS_FILE"
+if command -v jq &>/dev/null; then
+  printf '%s\n' "$(jq -cn \
+    --arg ts "$TS" \
+    --arg event "$EVENT" \
+    --arg session "$SESSION_ID" \
+    --arg tool "$TOOL_NAME" \
+    --arg input_summary "$INPUT_JSON" \
+    --arg output_summary "$OUTPUT_JSON" \
+    --arg project_id "$PROJECT_HASH" \
+    --arg project_name "$PROJECT_NAME" \
+    '{ts:$ts,event:$event,session:$session,tool:$tool,input_summary:$input_summary,output_summary:$output_summary,project_id:$project_id,project_name:$project_name}')" \
+    >> "$OBS_FILE"
+else
+  # Fallback: manual JSON construction
+  printf '{"ts":"%s","event":"%s","session":"%s","tool":"%s","project_id":"%s","project_name":"%s"}\n' \
+    "$TS" "$EVENT" "$SESSION_ID" "$TOOL_NAME" "$PROJECT_HASH" "$PROJECT_NAME" \
+    >> "$OBS_FILE"
+fi
 
 # ---------------------------------------------------------------------------
-# Write project.json and update registry (only if new — deferred to avoid
-# adding latency to every invocation)
+# Write project.json if new project
 # ---------------------------------------------------------------------------
-PROJECT_JSON="${PROJECT_OBS_DIR}/project.json"
+PROJECT_JSON="${PROJECT_DIR}/project.json"
 if [[ ! -f "$PROJECT_JSON" ]]; then
-  CREATED_AT="$TS"
-  jq -n \
-    --arg id "$PROJECT_HASH" \
-    --arg name "$PROJECT_NAME" \
-    --arg root "$PROJECT_ROOT" \
-    --arg created_at "$CREATED_AT" \
-    '{id:$id,name:$name,root:$root,created_at:$created_at}' \
-    > "$PROJECT_JSON"
-
-  # Update global projects.json registry
-  mkdir -p "$MULAHAZAH_DIR"
-  [[ -f "$GLOBAL_REGISTRY" ]] || printf '{}' > "$GLOBAL_REGISTRY"
-
-  TMP_REGISTRY="$(mktemp)"
-  jq --arg id "$PROJECT_HASH" \
-     --arg name "$PROJECT_NAME" \
-     --arg root "$PROJECT_ROOT" \
-     --arg created_at "$CREATED_AT" \
-     '.[$id] = {name:$name,root:$root,created_at:$created_at}' \
-     "$GLOBAL_REGISTRY" > "$TMP_REGISTRY" && mv "$TMP_REGISTRY" "$GLOBAL_REGISTRY"
+  if command -v jq &>/dev/null; then
+    jq -n \
+      --arg id "$PROJECT_HASH" \
+      --arg name "$PROJECT_NAME" \
+      --arg root "$PROJECT_ROOT" \
+      --arg created_at "$TS" \
+      '{id:$id,name:$name,root:$root,created_at:$created_at}' \
+      > "$PROJECT_JSON"
+  else
+    printf '{"id":"%s","name":"%s","root":"%s","created_at":"%s"}\n' \
+      "$PROJECT_HASH" "$PROJECT_NAME" "$PROJECT_ROOT" "$TS" \
+      > "$PROJECT_JSON"
+  fi
 fi
 
 exit 0

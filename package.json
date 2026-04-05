@@ -1,7 +1,7 @@
 {
   "name": "continuous-improve-skill",
-  "version": "2.0.1",
-  "description": "A structured 7-Law self-improvement loop with instinct-based learning for AI agents — research, plan, execute, verify, reflect, learn, iterate",
+  "version": "2.1.0",
+  "description": "7-law discipline framework with auto-leveling instinct learning for AI agents — research, plan, execute, verify, reflect, learn, iterate",
   "keywords": [
     "ai-agent",
     "claude-code",
@@ -21,9 +21,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/naimkatiman/continuous-improve-skill.git"
+    "url": "https://github.com/naimkatiman/continuous-improvement.git"
   },
-  "homepage": "https://github.com/naimkatiman/continuous-improve-skill#readme",
+  "homepage": "https://github.com/naimkatiman/continuous-improvement#readme",
   "bin": {
     "continuous-improve": "./bin/install.mjs"
   },
@@ -32,12 +32,9 @@
     "QUICKSTART.md",
     "CHANGELOG.md",
     "README.md",
-    "config.json",
     "bin/",
     "hooks/",
-    "agents/",
-    "commands/",
-    ".cloudplugin/"
+    "commands/"
   ],
   "type": "module"
 }
