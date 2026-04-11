@@ -1,11 +1,11 @@
 ---
 name: continuous-improvement
-description: "Reflect on the current session, analyze observations for patterns, and show instinct status. Run after finishing significant work."
+description: "Reflect on the current session, analyze observations for patterns, and show instinct status. Runs on-demand to save tokens."
 ---
 
 # /continuous-improvement
 
-Run this after completing significant work. It does three things in order.
+Run this when you want to reflect and learn — not every session. Three steps in order.
 
 ## Step 1: Reflect
 
@@ -38,6 +38,15 @@ Look at `~/.claude/instincts/<hash>/observations.jsonl`. If 20+ lines exist:
 5. Be conservative: only create instincts for 3+ observations of the same pattern
 
 If fewer than 20 observations, skip analysis and note the count.
+
+### Multi-Agent Analysis (500+ observations)
+
+When observation backlog is large, parallelize:
+- **Agent 1:** User corrections + error→fix patterns
+- **Agent 2:** Repeated workflows + tool preferences
+- **Agent 3:** Cross-reference existing instincts for updates
+
+Merge results and deduplicate before writing YAML files.
 
 ## Step 3: Show Status
 
@@ -72,3 +81,21 @@ Display all instincts for the current project + global:
 ```
 
 If no instincts or observations exist yet, explain this is expected — the system is in CAPTURE level and will create instincts after 20+ observations accumulate.
+
+## Subcommands
+
+### `/continuous-improvement weekly`
+
+Set up a weekly analysis schedule:
+1. Create a cron/loop schedule that runs `/continuous-improvement analyze` every 7 days
+2. Confirm the schedule to the user
+3. Show next scheduled run date
+
+### `/continuous-improvement always-on`
+
+Toggle always-on mode for the current project:
+1. Find project hash
+2. Create/update `~/.claude/instincts/<hash>/config.yaml` with `always_on: true|false`
+3. Confirm the change
+
+**Default is off** — observations accumulate silently, analysis only runs when you ask.

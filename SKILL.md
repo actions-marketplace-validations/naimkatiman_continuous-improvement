@@ -1,6 +1,6 @@
 ---
 name: continuous-improvement
-description: "Install structured self-improvement loops with instinct-based learning into Claude Code — research, plan, execute, verify, reflect, learn, iterate. Auto-levels from silent observation to active suggestions to auto-applied behaviors."
+description: "Install structured self-improvement loops with instinct-based learning into Claude Code — research, plan, execute, verify, reflect, learn, iterate. On-demand or weekly analysis to save tokens. Supports multi-agent parallel analysis."
 ---
 
 # continuous-improvement
@@ -28,9 +28,9 @@ Before executing, state:
 ## Law 3: One Thing at a Time
 
 - Complete and verify one task before starting the next
-- Never spawn parallel work for tasks you can do directly
 - Never report completion until you've checked actual output
 - If you want to "also quickly add" something — stop. Finish first.
+- **Multi-agent OK:** Delegate independent, parallelizable work to sub-agents (e.g., security review + code review + tests in parallel). Each agent follows the 7 Laws independently. Only parallelize when tasks have no shared state.
 
 ## Law 4: Verify Before Reporting
 
@@ -86,11 +86,23 @@ If you're skipping a step, that's the step you need most.
 
 ## Instinct System (Mulahazah)
 
-At the start of every session, check `~/.claude/instincts/` for this project's instincts.
+### Execution Mode: On-Demand (Default)
+
+The instinct system does **NOT** run automatically at session start. This saves tokens.
+
+| Mode | When it runs | Token cost |
+|------|-------------|------------|
+| **On-demand** (default) | Only when user runs `/continuous-improvement` or `/dashboard` | Zero overhead per session |
+| **Weekly** | User schedules via `/loop 7d /continuous-improvement analyze` or cron | One analysis per week |
+| **Always-on** (opt-in) | Set `always_on: true` in project instinct config | Runs at every session start |
+
+**To enable always-on:** Create `~/.claude/instincts/<hash>/config.yaml` with `always_on: true`. Otherwise, instincts are only loaded when explicitly requested.
+
+**Hooks still capture silently** — observations accumulate in `observations.jsonl` with near-zero cost. The expensive part (reading, analyzing, creating instincts) only happens when you ask for it.
 
 ### Auto-Level Detection
 
-Determine current level automatically:
+When analysis is triggered (on-demand, weekly, or always-on), determine level:
 
 1. **Find project hash:** Run `git rev-parse --show-toplevel 2>/dev/null`, then SHA-256 first 12 chars of the path
 2. **Check observations:** Count lines in `~/.claude/instincts/<hash>/observations.jsonl`
@@ -105,9 +117,9 @@ Determine current level automatically:
 
 Multiple levels can be active simultaneously — you might auto-apply some instincts while suggesting others.
 
-### Inline Analysis
+### Analysis (On-Demand)
 
-When 20+ unprocessed observations exist, analyze them as part of session startup:
+When triggered by `/continuous-improvement analyze`, weekly schedule, or always-on mode:
 
 1. Read `observations.jsonl` (last 500 lines)
 2. Read existing instincts (project + global `*.yaml` files)
@@ -118,6 +130,16 @@ When 20+ unprocessed observations exist, analyze them as part of session startup
    - **Tool preferences** → "use tool Y for task X"
 4. Create/update instinct YAML files in the project directory
 5. Be conservative: only create instincts for 3+ observations of the same pattern
+
+### Multi-Agent Analysis
+
+For large observation backlogs (500+ lines), parallelize analysis across agents:
+
+- **Agent 1:** Analyze user corrections and error→fix sequences
+- **Agent 2:** Analyze repeated workflows and tool preferences
+- **Agent 3:** Cross-reference with existing instincts for updates/promotions
+
+Each agent writes to separate temp files; the orchestrator merges results and deduplicates.
 
 ### Instinct Format
 
@@ -160,12 +182,14 @@ Cap: 0.9 max. Scope: default to project; promote to global when seen in 2+ proje
 
 ## /continuous-improvement Command
 
-Run `/continuous-improvement` after significant work:
+Run `/continuous-improvement` when you want to reflect and learn — not every session.
 
 1. **Reflect** — Generate Law 5 reflection
 2. **Analyze** — Process pending observations into instincts
 3. **Status** — Show all instincts with confidence and current level
 
 Subcommands:
-- `/continuous-improvement status` — Instinct overview only
-- `/continuous-improvement analyze` — Force analysis of pending observations
+- `/continuous-improvement status` — Instinct overview only (lightweight, reads YAML only)
+- `/continuous-improvement analyze` — Process pending observations into instincts
+- `/continuous-improvement weekly` — Set up weekly analysis schedule
+- `/continuous-improvement always-on` — Enable/disable always-on mode for this project
