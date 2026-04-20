@@ -1,0 +1,10 @@
+{
+  "continuous-improvement": {
+    "command": "node",
+    "args": [
+      "./bin/mcp-server.mjs",
+      "--mode",
+      "expert"
+    ]
+  }
+}

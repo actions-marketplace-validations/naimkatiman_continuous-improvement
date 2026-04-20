@@ -10,6 +10,10 @@ import { fileURLToPath } from "node:url";
 import {
   PACKAGE_NAME,
   VERSION,
+  getCodexMarketplaceManifest,
+  getCodexPluginHooksConfig,
+  getCodexPluginManifest,
+  getCodexPluginMcpConfig,
   getPluginManifest,
   getToolNames,
 } from "../lib/plugin-metadata.mjs";
@@ -381,5 +385,48 @@ describe("Plugin configs", () => {
       readFileSync(join(__dirname, "..", "plugins", "expert.json"), "utf8"),
     ) as ReturnType<typeof getPluginManifest>;
     assert.deepEqual(config, getPluginManifest("expert"));
+  });
+
+  it("codex plugin manifest matches the shared plugin metadata", () => {
+    const config = JSON.parse(
+      readFileSync(
+        join(__dirname, "..", "plugins", PACKAGE_NAME, ".codex-plugin", "plugin.json"),
+        "utf8",
+      ),
+    ) as ReturnType<typeof getCodexPluginManifest>;
+    assert.deepEqual(config, getCodexPluginManifest());
+  });
+
+  it("codex plugin MCP config matches the shared plugin metadata", () => {
+    const config = JSON.parse(
+      readFileSync(join(__dirname, "..", "plugins", PACKAGE_NAME, ".mcp.json"), "utf8"),
+    ) as ReturnType<typeof getCodexPluginMcpConfig>;
+    assert.deepEqual(config, getCodexPluginMcpConfig());
+  });
+
+  it("codex plugin hooks config matches the shared plugin metadata", () => {
+    const config = JSON.parse(
+      readFileSync(
+        join(__dirname, "..", "plugins", PACKAGE_NAME, "hooks", "hooks.json"),
+        "utf8",
+      ),
+    ) as ReturnType<typeof getCodexPluginHooksConfig>;
+    assert.deepEqual(config, getCodexPluginHooksConfig());
+  });
+
+  it("repo marketplace entry matches the shared plugin metadata", () => {
+    const config = JSON.parse(
+      readFileSync(join(__dirname, "..", ".agents", "plugins", "marketplace.json"), "utf8"),
+    ) as ReturnType<typeof getCodexMarketplaceManifest>;
+    assert.deepEqual(config, getCodexMarketplaceManifest());
+  });
+
+  it("bundles the core skill into the codex plugin package", () => {
+    const source = readFileSync(join(__dirname, "..", "SKILL.md"), "utf8");
+    const bundled = readFileSync(
+      join(__dirname, "..", "plugins", PACKAGE_NAME, "skills", PACKAGE_NAME, "SKILL.md"),
+      "utf8",
+    );
+    assert.equal(bundled, source);
   });
 });

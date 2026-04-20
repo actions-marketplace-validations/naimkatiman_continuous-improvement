@@ -50,6 +50,70 @@ export interface PluginManifest {
   version: string;
 }
 
+export interface CodexPluginAuthor {
+  name: string;
+  url?: string;
+}
+
+export interface CodexPluginInterface {
+  brandColor: string;
+  capabilities: string[];
+  category: string;
+  defaultPrompt: string[];
+  developerName: string;
+  displayName: string;
+  longDescription: string;
+  shortDescription: string;
+  websiteURL: string;
+}
+
+export interface CodexPluginManifest {
+  author: CodexPluginAuthor;
+  description: string;
+  homepage: string;
+  hooks: string;
+  interface: CodexPluginInterface;
+  keywords: string[];
+  license: string;
+  mcpServers: string;
+  name: string;
+  repository: string;
+  skills: string;
+  version: string;
+}
+
+export interface CodexPluginHookCommand {
+  command: string;
+  timeout: number;
+  type: "command";
+}
+
+export interface CodexPluginHooksConfig {
+  description: string;
+  hooks: Partial<Record<HookType, Array<{ hooks: CodexPluginHookCommand[] }>>>;
+}
+
+export type CodexPluginMcpConfig = Record<string, { args: string[]; command: string }>;
+
+export interface CodexMarketplaceManifest {
+  interface: {
+    displayName: string;
+  };
+  name: string;
+  plugins: Array<{
+    category: string;
+    name: string;
+    policy: {
+      authentication: "ON_INSTALL" | "ON_USE";
+      installation: "AVAILABLE" | "INSTALLED_BY_DEFAULT" | "NOT_AVAILABLE";
+    };
+    source: {
+      path: string;
+      source: "local";
+    };
+  }>;
+}
+
 interface ToolCatalogEntry extends ToolDefinition {
   manifestWhat: string;
 }
@@ -59,6 +123,47 @@ interface ModeMetadata {
   hookDescription: string;
   hooks: HookType[];
 }
+
+const REPOSITORY_URL = "https://github.com/naimkatiman/continuous-improvement";
+const HOMEPAGE_URL = `${REPOSITORY_URL}#readme`;
+const AUTHOR: CodexPluginAuthor = {
+  name: "naimkatiman",
+  url: "https://github.com/naimkatiman",
+};
+const KEYWORDS = [
+  "claude-code",
+  "claude-code-skill",
+  "ai-agent",
+  "agent-skill",
+  "ai-discipline",
+  "mulahazah",
+  "instinct",
+  "hooks",
+  "mcp",
+  "mcp-server",
+  "cursor",
+  "codex",
+  "gemini-cli",
+  "github-action",
+  "transcript-linter",
+];
+const CODEX_PLUGIN_INTERFACE: CodexPluginInterface = {
+  displayName: "Continuous Improvement",
+  shortDescription:
+    "7 Laws, learning hooks, and MCP tools that keep coding agents disciplined.",
+  longDescription:
+    "Continuous Improvement packages the 7 Laws of AI Agent Discipline for Codex with reusable skills, slash commands, observation hooks, instinct packs, and an expert MCP server that captures patterns over time.",
+  developerName: AUTHOR.name,
+  category: "Productivity",
+  capabilities: ["Read", "Write"],
+  websiteURL: REPOSITORY_URL,
+  defaultPrompt: [
+    "Apply the 7 Laws before editing this codebase.",
+    "Initialize planning-with-files for this task.",
+    "Reflect on this session and extract new instincts.",
+  ],
+  brandColor: "#15803D",
+};
 
 export function isPluginMode(value: string | undefined): value is PluginMode {
   return value === "beginner" || value === "expert";
@@ -338,5 +443,79 @@ export function getPluginManifest(mode: PluginMode): PluginManifest {
       included: [...modeMetadata.hooks],
       description: modeMetadata.hookDescription,
     },
+  };
+}
+
+export function getCodexPluginManifest(): CodexPluginManifest {
+  return {
+    name: PACKAGE_NAME,
+    version: VERSION,
+    description:
+      "The 7 Laws of AI Agent Discipline with Codex-ready skills, hooks, commands, instinct packs, and MCP tools.",
+    author: AUTHOR,
+    homepage: HOMEPAGE_URL,
+    repository: REPOSITORY_URL,
+    license: "MIT",
+    keywords: [...KEYWORDS],
+    skills: "./skills/",
+    hooks: "./hooks/hooks.json",
+    mcpServers: "./.mcp.json",
+    interface: { ...CODEX_PLUGIN_INTERFACE },
+  };
+}
+
+export function getCodexPluginHooksConfig(): CodexPluginHooksConfig {
+  const observeCommand = {
+    type: "command" as const,
+    command: "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/observe.sh\"",
+    timeout: 5,
+  };
+  const sessionCommand = {
+    type: "command" as const,
+    command: "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session.sh\"",
+    timeout: 5,
+  };
+
+  return {
+    description:
+      "Observation and session lifecycle hooks for continuous-improvement.",
+    hooks: {
+      PreToolUse: [{ hooks: [observeCommand] }],
+      PostToolUse: [{ hooks: [observeCommand] }],
+      SessionStart: [{ hooks: [sessionCommand] }],
+      SessionEnd: [{ hooks: [sessionCommand] }],
+    },
+  };
+}
+
+export function getCodexPluginMcpConfig(): CodexPluginMcpConfig {
+  return {
+    [PACKAGE_NAME]: {
+      command: "node",
+      args: ["./bin/mcp-server.mjs", "--mode", "expert"],
+    },
+  };
+}
+
+export function getCodexMarketplaceManifest(): CodexMarketplaceManifest {
+  return {
+    name: PACKAGE_NAME,
+    interface: {
+      displayName: CODEX_PLUGIN_INTERFACE.displayName,
+    },
+    plugins: [
+      {
+        name: PACKAGE_NAME,
+        source: {
+          source: "local",
+          path: `./plugins/${PACKAGE_NAME}`,
+        },
+        policy: {
+          installation: "AVAILABLE",
+          authentication: "ON_INSTALL",
+        },
+        category: CODEX_PLUGIN_INTERFACE.category,
+      },
+    ],
   };
 }
