@@ -338,6 +338,8 @@ Paste SKILL.md into your system prompt. Your agent follows the 7 Laws. No tools,
 
 **Expert** adds the MCP server for programmatic access, manual instinct management, import/export for team sharing, visual dashboard, and instinct packs.
 
+The `plugins/beginner.json` and `plugins/expert.json` manifests are generated from the same shared tool metadata the MCP server uses, so the plugin surface stays in sync.
+
 <details>
 <summary><b>MCP Tools Reference</b> (12 tools — click to expand)</summary>
 
@@ -385,7 +387,7 @@ Top-level layout a beginner needs to know:
 - `SKILL.md` — the 7 Laws + instinct behavior (paste into any LLM)
 - `hooks/` — bash observation hooks for Claude Code
 - `commands/` — slash commands (`/continuous-improvement`, `/planning-with-files`, `/discipline`, `/dashboard`)
-- `plugins/` — `beginner.json` and `expert.json` manifests
+- `plugins/` — generated `beginner.json` and `expert.json` manifests
 - `instinct-packs/` — React, Python, Go starter packs
 - `examples/` — real before/after walkthroughs
 - `skills/` — bundled companion skills ([README](skills/))

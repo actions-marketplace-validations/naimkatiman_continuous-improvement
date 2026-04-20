@@ -256,7 +256,7 @@ fi
 Create custom PM skills by extending the PM-Skills framework:
 
 ```javascript
-import PMSkills from 'continuous-improvement/src/pm-skills.mjs';
+import PMSkills from 'continuous-improvement/lib/pm-skills.mjs';
 
 const pmSkills = new PMSkills();
 
@@ -370,7 +370,7 @@ rm -f ci-workspace/project-context.json
 ### Programmatic Usage
 
 ```javascript
-import UnifiedContinuousImprovement from 'continuous-improvement/src/unified-plugin.mjs';
+import UnifiedContinuousImprovement from 'continuous-improvement/lib/unified-plugin.mjs';
 
 const unified = new UnifiedContinuousImprovement({
   workspace: './my-workspace',

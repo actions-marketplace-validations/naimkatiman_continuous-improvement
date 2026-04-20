@@ -16,15 +16,15 @@ This document describes the three new tools implemented for the continuous-impro
 ### Usage
 ```bash
 # Generate CLI for a repository
-node src/cli-anything.mjs ./my-project
+ci cli generate ./my-project
 
-# With options
-node src/cli-anything.mjs ./my-project --output-dir ./tools --verbose
+# List CLI generation capabilities
+ci cli list
 ```
 
 ### API Usage
 ```javascript
-import CLIAnything from './src/cli-anything.mjs';
+import CLIAnything from './lib/cli-anything.mjs';
 
 const cliAnything = new CLIAnything({ outputDir: './generated-clis' });
 const result = await cliAnything.generateCLI('./my-repo');
@@ -53,18 +53,18 @@ console.log(`CLI generated: ${result.outputPath}`);
 ### Usage
 ```bash
 # Start a new session
-node src/compound-engineering.mjs start "MyProject" "Build user management system"
+ci compound session "MyProject" "Build user management system"
 
 # View learnings
-node src/compound-engineering.mjs learnings
+ci compound learnings
 
 # Search learnings
-node src/compound-engineering.mjs search "performance"
+ci learnings search "performance"
 ```
 
 ### API Usage
 ```javascript
-import CompoundEngineering from './src/compound-engineering.mjs';
+import CompoundEngineering from './lib/compound-engineering.mjs';
 
 const ce = new CompoundEngineering({ workspace: './workspace' });
 
@@ -133,18 +133,18 @@ const review = await ce.review(work);
 ### Usage
 ```bash
 # List available skills
-node src/pm-skills.mjs list
+ci pm list
 
 # Execute specific skill
-node src/pm-skills.mjs execute growthLoops
+ci pm skill growthLoops
 
 # Run comprehensive analysis
-node src/pm-skills.mjs analyze
+ci pm analyze --industry "SaaS"
 ```
 
 ### API Usage
 ```javascript
-import PMSkills from './src/pm-skills.mjs';
+import PMSkills from './lib/pm-skills.mjs';
 
 const pmSkills = new PMSkills({ workspace: './pm-workspace' });
 
@@ -180,14 +180,23 @@ Each skill generates structured output with:
 ### File Structure
 ```
 src/
-├── cli-anything.mjs          # CLI generation tool
-├── compound-engineering.mjs  # Iterative development framework
-└── pm-skills.mjs            # Product management skills collection
+├── bin/
+│   └── unified-cli.mts       # Main CLI entrypoint
+├── lib/
+│   ├── cli-anything.mts      # CLI generation tool
+│   ├── compound-engineering.mts
+│   │                         # Iterative development framework
+│   └── pm-skills.mts         # Product management skills collection
+
+lib/
+├── cli-anything.mjs          # Built runtime module
+├── compound-engineering.mjs  # Built runtime module
+└── pm-skills.mjs             # Built runtime module
 
 test/
 ├── cli-anything.test.mjs          # CLI-Anything tests
 ├── compound-engineering.test.mjs  # Compound Engineering tests
-└── pm-skills.test.mjs            # PM-Skills tests
+└── pm-skills.test.mjs             # PM-Skills tests
 ```
 
 ## Testing

@@ -20,7 +20,15 @@ import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 
-type Mode = "beginner" | "expert";
+import {
+  PACKAGE_NAME,
+  VERSION,
+  getToolDefinitions,
+  isPluginMode,
+  type PluginMode as Mode,
+  type ToolDefinition,
+} from "../lib/plugin-metadata.mjs";
+
 type Level = "AUTO-APPLY" | "SUGGEST" | "ANALYZE" | "CAPTURE";
 type InstinctScope = "project" | "global";
 type JsonRpcId = number | string | null;
@@ -52,25 +60,6 @@ interface Observation {
   [key: string]: unknown;
 }
 
-interface SchemaProperty {
-  default?: boolean | number | string | string[];
-  description?: string;
-  items?: {
-    type: string;
-  };
-  type: string;
-}
-
-interface ToolDefinition {
-  description: string;
-  inputSchema: {
-    properties: Record<string, SchemaProperty>;
-    required: string[];
-    type: "object";
-  };
-  name: string;
-}
-
 interface ToolResult {
   content: Array<{
     text: string;
@@ -97,10 +86,6 @@ interface JsonRpcResponse {
 
 function getHomeDir(): string {
   return process.env.HOME || process.env.USERPROFILE || homedir();
-}
-
-function isMode(value: string | undefined): value is Mode {
-  return value === "beginner" || value === "expert";
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -157,7 +142,6 @@ function toInstinct(value: unknown): Instinct | null {
   };
 }
 
-const VERSION = "3.2.0";
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const INSTINCTS_DIR = join(getHomeDir(), ".claude", "instincts");
 const GLOBAL_DIR = join(INSTINCTS_DIR, "global");
@@ -172,7 +156,7 @@ const PLANNING_FILES = {
 const args = process.argv.slice(2);
 const modeIndex = args.indexOf("--mode");
 const requestedMode = args[modeIndex + 1];
-const MODE: Mode = isMode(requestedMode) ? requestedMode : "beginner";
+const MODE: Mode = isPluginMode(requestedMode) ? requestedMode : "beginner";
 
 function getProjectHash(): ProjectInfo {
   try {
@@ -544,147 +528,8 @@ function hasMeaningfulContent(content: string, placeholders: string[]): boolean 
     );
 }
 
-const BEGINNER_TOOLS: ToolDefinition[] = [
-  {
-    name: "ci_status",
-    description: "Show current level, instinct count, and observation count for this project. Good starting point to see what the system has learned.",
-    inputSchema: { type: "object", properties: {}, required: [] },
-  },
-  {
-    name: "ci_instincts",
-    description: "List all learned instincts for this project with their confidence levels and behaviors.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        min_confidence: { type: "number", description: "Minimum confidence to show (default: 0)", default: 0 },
-      },
-      required: [],
-    },
-  },
-  {
-    name: "ci_reflect",
-    description: "Generate a structured reflection for the current session. Provide a summary of what you worked on.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        summary: { type: "string", description: "Brief summary of what was done this session" },
-      },
-      required: ["summary"],
-    },
-  },
-];
-
-const EXPERT_TOOLS: ToolDefinition[] = [
-  {
-    name: "ci_reinforce",
-    description: "Accept or reject an instinct suggestion. Adjusts confidence: +0.15 for accept, -0.1 for reject.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        instinct_id: { type: "string", description: "The instinct ID to reinforce" },
-        accepted: { type: "boolean", description: "true = accept (+0.15), false = reject (-0.1)" },
-      },
-      required: ["instinct_id", "accepted"],
-    },
-  },
-  {
-    name: "ci_create_instinct",
-    description: "Manually create a new instinct with a trigger, body, and starting confidence.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        id: { type: "string", description: "Unique instinct ID (kebab-case)" },
-        trigger: { type: "string", description: "When this instinct applies" },
-        body: { type: "string", description: "The behavior to follow" },
-        confidence: { type: "number", description: "Starting confidence 0.0-0.9 (default: 0.6)", default: 0.6 },
-        domain: { type: "string", description: "Domain: workflow|tooling|testing|patterns|code-style", default: "workflow" },
-        scope: { type: "string", description: "Scope: project|global", default: "project" },
-      },
-      required: ["id", "trigger", "body"],
-    },
-  },
-  {
-    name: "ci_observations",
-    description: "View recent tool call observations captured by hooks.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: { type: "number", description: "Number of recent observations to return (default: 20)", default: 20 },
-      },
-      required: [],
-    },
-  },
-  {
-    name: "ci_export",
-    description: "Export all instincts as a JSON array for sharing or backup.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        scope: { type: "string", description: "Which instincts: project|global|all (default: all)", default: "all" },
-      },
-      required: [],
-    },
-  },
-  {
-    name: "ci_import",
-    description: "Import instincts from a JSON array. Skips duplicates by ID.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        instincts_json: { type: "string", description: "JSON array of instinct objects to import" },
-        scope: { type: "string", description: "Import to: project|global (default: project)", default: "project" },
-      },
-      required: ["instincts_json"],
-    },
-  },
-  {
-    name: "ci_plan_init",
-    description: "Create task_plan.md, findings.md, and progress.md in the project root for persistent file-based planning.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        goal: { type: "string", description: "Goal for the planning workflow" },
-        phases: {
-          type: "array",
-          description: "Optional ordered phase names. Defaults to Research, Plan, Execute, Verify, Reflect.",
-          items: { type: "string" },
-        },
-        force: { type: "boolean", description: "Overwrite existing planning files", default: false },
-      },
-      required: ["goal"],
-    },
-  },
-  {
-    name: "ci_plan_status",
-    description: "Summarize the status of task_plan.md, findings.md, and progress.md in the project root.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        include_contents: { type: "boolean", description: "Include raw file contents in the response", default: false },
-      },
-      required: [],
-    },
-  },
-  {
-    name: "ci_dashboard",
-    description: "Visual dashboard showing instinct health, observation stats, confidence distribution, and learning progress.",
-    inputSchema: { type: "object", properties: {}, required: [] },
-  },
-  {
-    name: "ci_load_pack",
-    description: "Load a starter instinct pack (react, python, go) into the current project.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        pack: { type: "string", description: "Pack name: react, python, or go" },
-      },
-      required: ["pack"],
-    },
-  },
-];
-
 function getAllTools(): ToolDefinition[] {
-  return MODE === "expert" ? [...BEGINNER_TOOLS, ...EXPERT_TOOLS] : BEGINNER_TOOLS;
+  return getToolDefinitions(MODE);
 }
 
 function text(value: string): ToolResult {
@@ -1144,7 +989,7 @@ function handleMessage(message: JsonRpcMessage): void {
             resources: { subscribe: false, listChanged: false },
           },
           serverInfo: {
-            name: "continuous-improvement",
+            name: PACKAGE_NAME,
             version: VERSION,
           },
         },
@@ -1229,4 +1074,4 @@ function handleMessage(message: JsonRpcMessage): void {
   }
 }
 
-console.error(`continuous-improvement MCP server v${VERSION} started (mode: ${MODE})`);
+console.error(`${PACKAGE_NAME} MCP server v${VERSION} started (mode: ${MODE})`);

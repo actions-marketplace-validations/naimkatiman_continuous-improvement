@@ -58,7 +58,11 @@
       "mcpServers": {
         "continuous-improvement": {
           "command": "node",
-          "args": ["<install-path>/bin/mcp-server.mjs", "--mode", "expert"]
+          "args": [
+            "<install-path>/bin/mcp-server.mjs",
+            "--mode",
+            "expert"
+          ]
         }
       }
     },
@@ -66,13 +70,22 @@
       "mcpServers": {
         "continuous-improvement": {
           "command": "node",
-          "args": ["<install-path>/bin/mcp-server.mjs", "--mode", "expert"]
+          "args": [
+            "<install-path>/bin/mcp-server.mjs",
+            "--mode",
+            "expert"
+          ]
         }
       }
     }
   },
   "hooks": {
-    "included": ["PreToolUse", "PostToolUse", "SessionStart", "SessionEnd"],
+    "included": [
+      "PreToolUse",
+      "PostToolUse",
+      "SessionStart",
+      "SessionEnd"
+    ],
     "description": "Full hook suite: observation capture + session-level instinct loading and auto-reflection."
   }
 }

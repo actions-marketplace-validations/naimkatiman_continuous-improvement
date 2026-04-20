@@ -2,7 +2,7 @@
   "name": "continuous-improvement",
   "version": "3.2.0",
   "mode": "beginner",
-  "description": "6 essential tools: status, instincts, reflection, quick CLI generation, basic PM analysis, and project overview. No config needed.",
+  "description": "Beginner plugin: 3 core tools for status, instincts, and reflection. Minimal MCP surface, easy to maintain.",
   "tools": [
     {
       "name": "ci_status",
@@ -15,18 +15,6 @@
     {
       "name": "ci_reflect",
       "what": "Reflect on what you did this session"
-    },
-    {
-      "name": "ci_cli_quick",
-      "what": "Quickly generate basic CLI for current repository"
-    },
-    {
-      "name": "ci_pm_basic",
-      "what": "Run basic product management analysis (user personas and value proposition)"
-    },
-    {
-      "name": "ci_project_overview",
-      "what": "Get quick overview of current project state and progress"
     }
   ],
   "setup": {
@@ -34,7 +22,11 @@
       "mcpServers": {
         "continuous-improvement": {
           "command": "node",
-          "args": ["<install-path>/bin/mcp-server.mjs", "--mode", "beginner"]
+          "args": [
+            "<install-path>/bin/mcp-server.mjs",
+            "--mode",
+            "beginner"
+          ]
         }
       }
     },
@@ -42,13 +34,20 @@
       "mcpServers": {
         "continuous-improvement": {
           "command": "node",
-          "args": ["<install-path>/bin/mcp-server.mjs", "--mode", "beginner"]
+          "args": [
+            "<install-path>/bin/mcp-server.mjs",
+            "--mode",
+            "beginner"
+          ]
         }
       }
     }
   },
   "hooks": {
-    "included": ["PreToolUse", "PostToolUse"],
-    "description": "Silently captures every tool call as observations. <50ms, never blocks."
+    "included": [
+      "PreToolUse",
+      "PostToolUse"
+    ],
+    "description": "Silently captures every tool call as observations. Lightweight and non-blocking."
   }
 }

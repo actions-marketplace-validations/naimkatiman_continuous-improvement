@@ -46,7 +46,7 @@ Add translations to `docs/` following the pattern `README.<lang-code>.md`.
 ## Code Style
 
 - Zero runtime dependencies (Node.js built-ins only at runtime)
-- TypeScript source lives in `src/` and compiled `.mjs` artifacts are committed in `bin/` and `test/`
+- TypeScript source lives in `src/` and compiled `.mjs` artifacts are committed in `bin/`, `lib/`, and `test/`
 - Tests use `node:test` and `node:assert/strict`
 - Hooks must complete in <200ms on Unix; <500ms budget is allowed in tests to absorb bash spawn cost on Windows
 - MCP server must work without any npm packages
@@ -57,20 +57,21 @@ Add translations to `docs/` following the pattern `README.<lang-code>.md`.
 SKILL.md                    → The rules (any LLM can follow these)
 hooks/observe.sh            → Captures tool calls to JSONL (<50ms)
 hooks/session.sh            → Session start/end events (expert mode)
-src/bin/*.mts               → TypeScript source for CLI tools and tests
+src/bin/*.mts               → TypeScript source for CLI entrypoints and generators
+src/lib/*.mts               → TypeScript source for runtime modules and shared plugin metadata
 src/test/*.mts              → TypeScript source for the test suite
-src/{cli-anything,compound-engineering,pm-skills,unified-plugin}.mjs
-                            → Plain-JS runtime modules loaded by bin/unified-cli.mjs
 bin/*.mjs                   → Committed runtime artifacts used by npm/action entrypoints
                               (generated from src/bin/*.mts by `npm run build`)
+lib/*.mjs                   → Committed runtime modules generated from src/lib/*.mts
 test/*.test.mjs             → Committed test artifacts (generated from src/test/*.mts)
+plugins/*.json              → Generated plugin manifests from shared MCP/plugin metadata
 ```
 
 ### Editing the CLI / MCP server / linter
 
-**Do not edit `bin/*.mjs` or `test/*.test.mjs` directly.** They are build output from
-`src/bin/*.mts` and `src/test/*.mts`. The CI step `npm run verify:generated` will
-fail any PR where the committed `.mjs` drifts from the source.
+**Do not edit `bin/*.mjs`, `lib/*.mjs`, `test/*.test.mjs`, or `plugins/*.json` directly.**
+They are generated from `src/`. The CI step `npm run verify:generated` will fail
+any PR where committed build artifacts drift from the source.
 
 Workflow:
 
@@ -82,12 +83,11 @@ $EDITOR src/bin/install.mts
 npm run build
 
 # 3. Verify both source and generated are committed together
-git status     # both src/bin/install.mts and bin/install.mjs should be staged
+git status     # source changes plus regenerated bin/, lib/, test/, or plugins/ should be staged
 ```
 
-The plain-`.mjs` modules under `src/` (not `src/bin/` or `src/test/`) are authored
-directly in JavaScript and loaded at runtime by `bin/unified-cli.mjs`. They are
-listed explicitly in `package.json` `files` so they ship with the npm tarball.
+Reusable runtime modules live in `src/lib/*.mts` and compile to `lib/*.mjs`.
+They are listed explicitly in `package.json` `files` so they ship with the npm tarball.
 
 ## Testing
 
@@ -101,10 +101,10 @@ listed explicitly in `package.json` `files` so they ship with the npm tarball.
 ### Commands
 
 ```bash
-npm run build                       # Regenerate bin/*.mjs and test/*.test.mjs
+npm run build                       # Regenerate bin/*.mjs, lib/*.mjs, test/*.test.mjs, plugins/*.json
 npm test                            # Build + run all tests
 node --test test/hook.test.mjs      # Run a single test file
-npm run verify:generated            # Confirm src/ and bin/ are in sync (CI gate)
+npm run verify:generated            # Confirm source and generated artifacts are in sync (CI gate)
 ```
 
 Tests must:

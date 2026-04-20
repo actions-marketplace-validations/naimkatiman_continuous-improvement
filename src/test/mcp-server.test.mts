@@ -7,6 +7,13 @@ import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import {
+  PACKAGE_NAME,
+  VERSION,
+  getPluginManifest,
+  getToolNames,
+} from "../lib/plugin-metadata.mjs";
+
 interface JsonRpcResponse {
   error?: {
     code?: number;
@@ -126,17 +133,14 @@ describe("MCP server — beginner mode", () => {
 
   it("responds to initialize", async () => {
     const response = await client.send({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} });
-    assert.equal(response.result.serverInfo.name, "continuous-improvement");
-    assert.equal(response.result.serverInfo.version, "3.2.0");
+    assert.equal(response.result.serverInfo.name, PACKAGE_NAME);
+    assert.equal(response.result.serverInfo.version, VERSION);
   });
 
   it("lists beginner tools only (3 tools)", async () => {
     const response = await client.send({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
     const names = response.result.tools.map((tool: { name: string }) => tool.name);
-    assert.equal(names.length, 3);
-    assert.ok(names.includes("ci_status"));
-    assert.ok(names.includes("ci_instincts"));
-    assert.ok(names.includes("ci_reflect"));
+    assert.deepEqual(names, getToolNames("beginner"));
     assert.ok(!names.includes("ci_reinforce"), "Should NOT include expert tools");
   });
 
@@ -228,16 +232,11 @@ describe("MCP server — expert mode", () => {
     await client.send({ jsonrpc: "2.0", id: 10, method: "initialize", params: {} });
     const response = await client.send({ jsonrpc: "2.0", id: 11, method: "tools/list", params: {} });
     const names = response.result.tools.map((tool: { name: string }) => tool.name);
-    assert.equal(names.length, 12, `Expected 12 tools, got ${names.length}: ${names.join(", ")}`);
-    assert.ok(names.includes("ci_reinforce"));
-    assert.ok(names.includes("ci_create_instinct"));
-    assert.ok(names.includes("ci_observations"));
-    assert.ok(names.includes("ci_export"));
-    assert.ok(names.includes("ci_import"));
-    assert.ok(names.includes("ci_plan_init"));
-    assert.ok(names.includes("ci_plan_status"));
-    assert.ok(names.includes("ci_dashboard"));
-    assert.ok(names.includes("ci_load_pack"));
+    assert.deepEqual(
+      names,
+      getToolNames("expert"),
+      `Expected synced expert tool list, got: ${names.join(", ")}`,
+    );
   });
 
   it("ci_export returns JSON array", async () => {
@@ -370,31 +369,17 @@ describe("MCP server — expert mode", () => {
 });
 
 describe("Plugin configs", () => {
-  it("beginner.json is valid and has 3 tools", () => {
-    const config = JSON.parse(readFileSync(join(__dirname, "..", "plugins", "beginner.json"), "utf8")) as {
-      mode: string;
-      tools: Array<{ name?: string }>;
-      version: string;
-    };
-    assert.equal(config.mode, "beginner");
-    assert.ok(config.tools.length >= 3);
-    assert.match(config.version, /^\d+\.\d+\.\d+$/);
-    assert.ok(config.tools.some((tool) => tool.name === "ci_status"));
-    assert.ok(config.tools.some((tool) => tool.name === "ci_reflect"));
+  it("beginner.json matches the shared plugin manifest", () => {
+    const config = JSON.parse(
+      readFileSync(join(__dirname, "..", "plugins", "beginner.json"), "utf8"),
+    ) as ReturnType<typeof getPluginManifest>;
+    assert.deepEqual(config, getPluginManifest("beginner"));
   });
 
-  it("expert.json is valid and has 12 tools", () => {
-    const config = JSON.parse(readFileSync(join(__dirname, "..", "plugins", "expert.json"), "utf8")) as {
-      mode: string;
-      tools: Array<{ name?: string }>;
-      version: string;
-    };
-    assert.equal(config.mode, "expert");
-    assert.ok(config.tools.length >= 12);
-    assert.match(config.version, /^\d+\.\d+\.\d+$/);
-    assert.ok(config.tools.some((tool) => tool.name === "ci_plan_init"));
-    assert.ok(config.tools.some((tool) => tool.name === "ci_plan_status"));
-    assert.ok(config.tools.some((tool) => tool.name === "ci_dashboard"));
-    assert.ok(config.tools.some((tool) => tool.name === "ci_load_pack"));
+  it("expert.json matches the shared plugin manifest", () => {
+    const config = JSON.parse(
+      readFileSync(join(__dirname, "..", "plugins", "expert.json"), "utf8"),
+    ) as ReturnType<typeof getPluginManifest>;
+    assert.deepEqual(config, getPluginManifest("expert"));
   });
 });
