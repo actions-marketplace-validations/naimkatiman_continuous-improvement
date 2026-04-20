@@ -2,11 +2,12 @@
 import { copyFile, mkdir, readdir, rm, writeFile, } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PACKAGE_NAME, PLUGIN_MODES, getCodexMarketplaceManifest, getCodexPluginHooksConfig, getCodexPluginManifest, getCodexPluginMcpConfig, getClaudePluginManifest, getClaudePluginMarketplaceManifest, getPluginManifest, } from "../lib/plugin-metadata.mjs";
+import { PACKAGE_NAME, PLUGIN_MODES, getCodexMarketplaceManifest, getCodexPluginHooksConfig, getCodexPluginManifest, getCodexPluginMcpConfig, getClaudePluginManifest, getClaudePluginMarketplaceManifest, getClaudeRepoMarketplaceManifest, getPluginManifest, } from "../lib/plugin-metadata.mjs";
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PLUGINS_DIR = join(REPO_ROOT, "plugins");
 const CODEX_PLUGIN_DIR = join(PLUGINS_DIR, PACKAGE_NAME);
 const MARKETPLACE_PATH = join(REPO_ROOT, ".agents", "plugins", "marketplace.json");
+const CLAUDE_REPO_MARKETPLACE_PATH = join(REPO_ROOT, ".claude-plugin", "marketplace.json");
 async function writeJson(filePath, data) {
     await mkdir(dirname(filePath), { recursive: true });
     await writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`);
@@ -100,6 +101,7 @@ async function writeCodexPluginBundle() {
     await writeJson(join(CODEX_PLUGIN_DIR, "hooks", "hooks.json"), getCodexPluginHooksConfig());
     await writeBundledSkills();
     await writeJson(MARKETPLACE_PATH, getCodexMarketplaceManifest());
+    await writeJson(CLAUDE_REPO_MARKETPLACE_PATH, getClaudeRepoMarketplaceManifest());
 }
 await mkdir(PLUGINS_DIR, { recursive: true });
 for (const mode of PLUGIN_MODES) {
@@ -110,4 +112,5 @@ for (const mode of PLUGIN_MODES) {
 await writeCodexPluginBundle();
 console.log(`Generated ${join(CODEX_PLUGIN_DIR, ".claude-plugin", "plugin.json")}`);
 console.log(`Generated ${join(CODEX_PLUGIN_DIR, ".codex-plugin", "plugin.json")}`);
+console.log(`Generated ${CLAUDE_REPO_MARKETPLACE_PATH}`);
 console.log(`Generated ${MARKETPLACE_PATH}`);

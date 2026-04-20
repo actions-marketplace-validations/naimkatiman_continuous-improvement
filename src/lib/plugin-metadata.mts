@@ -142,7 +142,7 @@ export interface ClaudePluginMarketplaceManifest {
     description: string;
     homepage: string;
     name: string;
-    source: "./";
+    source: string;
     version: string;
   }>;
 }
@@ -582,6 +582,30 @@ export function getClaudePluginMarketplaceManifest(): ClaudePluginMarketplaceMan
         description: SHARED_PLUGIN_DESCRIPTION,
         version: VERSION,
         source: "./",
+        author: {
+          name: AUTHOR.name,
+        },
+        category: CLAUDE_PLUGIN_CATEGORY,
+        homepage: REPOSITORY_URL,
+      },
+    ],
+  };
+}
+
+export function getClaudeRepoMarketplaceManifest(): ClaudePluginMarketplaceManifest {
+  return {
+    name: `${PACKAGE_NAME}-dev`,
+    description:
+      "Marketplace for the Continuous Improvement Claude Code plugin.",
+    owner: {
+      name: AUTHOR.name,
+    },
+    plugins: [
+      {
+        name: PACKAGE_NAME,
+        description: SHARED_PLUGIN_DESCRIPTION,
+        version: VERSION,
+        source: `./plugins/${PACKAGE_NAME}`,
         author: {
           name: AUTHOR.name,
         },

@@ -16,6 +16,7 @@ import {
   getCodexPluginMcpConfig,
   getClaudePluginManifest,
   getClaudePluginMarketplaceManifest,
+  getClaudeRepoMarketplaceManifest,
   getPluginManifest,
   getToolNames,
 } from "../lib/plugin-metadata.mjs";
@@ -417,6 +418,16 @@ describe("Plugin configs", () => {
       ),
     ) as ReturnType<typeof getClaudePluginMarketplaceManifest>;
     assert.deepEqual(config, getClaudePluginMarketplaceManifest());
+  });
+
+  it("repo-level claude marketplace manifest matches the shared plugin metadata", () => {
+    const config = JSON.parse(
+      readFileSync(
+        join(__dirname, "..", ".claude-plugin", "marketplace.json"),
+        "utf8",
+      ),
+    ) as ReturnType<typeof getClaudeRepoMarketplaceManifest>;
+    assert.deepEqual(config, getClaudeRepoMarketplaceManifest());
   });
 
   it("codex plugin MCP config matches the shared plugin metadata", () => {

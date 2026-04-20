@@ -340,7 +340,7 @@ Paste SKILL.md into your system prompt. Your agent follows the 7 Laws. No tools,
 
 The `plugins/beginner.json` and `plugins/expert.json` manifests are generated from the same shared tool metadata the MCP server uses, so the plugin surface stays in sync.
 
-`npm run build` also generates a shared Claude Code + Codex plugin bundle at `plugins/continuous-improvement/`, including `.claude-plugin/` and `.codex-plugin/` manifests, plus `.agents/plugins/marketplace.json` for the repo-local Codex marketplace.
+`npm run build` also generates a shared Claude Code + Codex plugin bundle at `plugins/continuous-improvement/`, including `.claude-plugin/` and `.codex-plugin/` manifests, plus `.claude-plugin/marketplace.json` at the repo root for GitHub-based Claude marketplace installs and `.agents/plugins/marketplace.json` for the repo-local Codex marketplace.
 
 <details>
 <summary><b>MCP Tools Reference</b> (12 tools — click to expand)</summary>
@@ -390,11 +390,19 @@ Top-level layout a beginner needs to know:
 - `hooks/` — bash observation hooks for Claude Code
 - `commands/` — slash commands (`/continuous-improvement`, `/planning-with-files`, `/discipline`, `/dashboard`)
 - `plugins/` — generated `beginner.json`, `expert.json`, and the shared Claude Code + Codex plugin bundle at `plugins/continuous-improvement/`
+- `.claude-plugin/marketplace.json` — repo-root Claude Code marketplace entry so users can add this GitHub repo directly
 - `.agents/plugins/marketplace.json` — repo-local Codex marketplace entry for the generated plugin bundle
 - `instinct-packs/` — React, Python, Go starter packs
 - `examples/` — real before/after walkthroughs
 - `skills/` — bundled companion skills ([README](skills/))
 - `docs/` — translations (zh-CN, ja)
+
+To install from GitHub in Claude Code after you publish the repo:
+
+```bash
+/plugin marketplace add <github-user>/continuous-improvement
+/plugin install continuous-improvement@continuous-improvement-dev
+```
 
 Contributor-facing internals (`src/`, `bin/`, `test/`, build pipeline) are documented in [CONTRIBUTING.md](CONTRIBUTING.md#architecture).
 

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { PACKAGE_NAME, VERSION, getCodexMarketplaceManifest, getCodexPluginHooksConfig, getCodexPluginManifest, getCodexPluginMcpConfig, getClaudePluginManifest, getClaudePluginMarketplaceManifest, getPluginManifest, getToolNames, } from "../lib/plugin-metadata.mjs";
+import { PACKAGE_NAME, VERSION, getCodexMarketplaceManifest, getCodexPluginHooksConfig, getCodexPluginManifest, getCodexPluginMcpConfig, getClaudePluginManifest, getClaudePluginMarketplaceManifest, getClaudeRepoMarketplaceManifest, getPluginManifest, getToolNames, } from "../lib/plugin-metadata.mjs";
 class McpTestClient {
     buffer = Buffer.alloc(0);
     proc;
@@ -322,6 +322,10 @@ describe("Plugin configs", () => {
     it("claude plugin marketplace manifest matches the shared plugin metadata", () => {
         const config = JSON.parse(readFileSync(join(__dirname, "..", "plugins", PACKAGE_NAME, ".claude-plugin", "marketplace.json"), "utf8"));
         assert.deepEqual(config, getClaudePluginMarketplaceManifest());
+    });
+    it("repo-level claude marketplace manifest matches the shared plugin metadata", () => {
+        const config = JSON.parse(readFileSync(join(__dirname, "..", ".claude-plugin", "marketplace.json"), "utf8"));
+        assert.deepEqual(config, getClaudeRepoMarketplaceManifest());
     });
     it("codex plugin MCP config matches the shared plugin metadata", () => {
         const config = JSON.parse(readFileSync(join(__dirname, "..", "plugins", PACKAGE_NAME, ".mcp.json"), "utf8"));
